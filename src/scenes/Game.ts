@@ -5,13 +5,13 @@ import {createLizardAnims} from "~/animation/LizardAnims";
 import {createCharacterAnims} from "~/animation/CharacterAnims";
 
 import '../characters/Faune'
+import Faune from "~/characters/Faune";
+import {sceneEvents} from "~/events/EventsCenter";
 
 export default class Game extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
-  private faune!: Phaser.Physics.Arcade.Sprite
+  private faune!: Faune
   private lizards?: Phaser.Physics.Arcade.Group
-
-  private hit = 0
 
   constructor() {
     super('game');
@@ -22,6 +22,8 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
+    this.scene.run('game-ui')
+
     createLizardAnims(this.anims)
     createCharacterAnims(this.anims)
 
@@ -34,13 +36,9 @@ export default class Game extends Phaser.Scene {
 
     wallsLayer.setCollisionByProperty({collides: true})
 
-    debugDraw(this, wallsLayer)
+    // debugDraw(this, wallsLayer)
 
     this.faune = this.add.faune(128, 128, 'faune')
-
-    // this.faune = this.physics.add.sprite(128, 128, 'faune', 'walk-down-3.png')
-    // this.faune.body
-    //   .setSize(this.faune.width * 0.5, this.faune.height * 0.8, true)
 
     const mainCamera = this.cameras.main
     mainCamera
@@ -64,24 +62,13 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(wallsLayer, lizards)
     this.physics.add.collider(this.faune, lizards, this.playerLizardCollision, undefined, this)
 
-    // const lizard = this.physics.add.sprite(160, 160, 'green_lizard')
-    // lizard.anims.play('lizard-idle')
   }
 
   update(t, dt) {
-    if (this.hit > 0) {
-      ++this.hit
-      if (this.hit > 10) {
-        this.hit = 0
-      }
 
-      return false
-    }
-
-    if (this.cursors && this.faune) {
+    if (this.faune) {
       this.faune.update(this.cursors)
     }
-
 
   }
 
@@ -93,9 +80,9 @@ export default class Game extends Phaser.Scene {
 
     const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(200)
 
-    this.faune.setVelocity(dir.x, dir.y)
+    this.faune.handleDamage(dir)
 
-    this.hit = 1
+    sceneEvents.emit('player-health-changed', this.faune.health)
   }
 
 }
