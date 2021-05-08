@@ -1,8 +1,17 @@
+import Lizard from "~/enemies/Lizard";
+
 import {debugDraw} from "../utils/debug";
+import {createLizardAnims} from "~/animation/LizardAnims";
+import {createCharacterAnims} from "~/animation/CharacterAnims";
+
+import '../characters/Faune'
 
 export default class Game extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private faune!: Phaser.Physics.Arcade.Sprite
+  private lizards?: Phaser.Physics.Arcade.Group
+
+  private hit = 0
 
   constructor() {
     super('game');
@@ -13,8 +22,11 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
+    createLizardAnims(this.anims)
+    createCharacterAnims(this.anims)
+
     const map = this.make.tilemap({key: 'dungeon'})
-    const tileset = map.addTilesetImage('dungeon_tilemap', 'tiles', 16, 16, 1, 2)
+    const tileset = map.addTilesetImage('dungeon_tilemap', 'tiles_ext', 16, 16, 1, 2)
     // const tileset = map.addTilesetImage('dungeon_tilemap', 'tiles', 16, 16)
 
     map.createLayer('ground', tileset)
@@ -24,17 +36,11 @@ export default class Game extends Phaser.Scene {
 
     debugDraw(this, wallsLayer)
 
-    this.faune = this.physics.add.sprite(128, 128, 'faune', 'walk-down-3.png')
-    this.faune.body
-      .setSize(this.faune.width * 0.5, this.faune.height * 0.8, true)
-      // .setScale(2)
-    // .setOffset(0, 0)
+    this.faune = this.add.faune(128, 128, 'faune')
 
-    this.physics.add.collider(this.faune, wallsLayer)
-
-    this.createAnims()
-
-    this.faune.anims.play('faune-idle-down')
+    // this.faune = this.physics.add.sprite(128, 128, 'faune', 'walk-down-3.png')
+    // this.faune.body
+    //   .setSize(this.faune.width * 0.5, this.faune.height * 0.8, true)
 
     const mainCamera = this.cameras.main
     mainCamera
@@ -43,97 +49,53 @@ export default class Game extends Phaser.Scene {
         0, 0)
       .setBounds(0, 0, map.widthInPixels, map.heightInPixels)
       .setDeadzone(150, 110)
+
+    const lizards = this.physics.add.group({
+      classType: Lizard,
+      createCallback: (go) => {
+        const lizGO = go as Lizard
+
+        lizGO.body.onCollide = true
+      }
+    })
+    lizards.get(160, 160, 'green_lizard')
+
+    this.physics.add.collider(this.faune, wallsLayer)
+    this.physics.add.collider(wallsLayer, lizards)
+    this.physics.add.collider(this.faune, lizards, this.playerLizardCollision, undefined, this)
+
+    // const lizard = this.physics.add.sprite(160, 160, 'green_lizard')
+    // lizard.anims.play('lizard-idle')
   }
 
   update(t, dt) {
-    if (!this.cursors || !this.faune) return false;
+    if (this.hit > 0) {
+      ++this.hit
+      if (this.hit > 10) {
+        this.hit = 0
+      }
 
-    this.moveFaune()
-  }
-
-  private moveFaune() {
-    const speed = 150;
-
-    if (this.cursors.left.isDown) {
-      this.faune.setVelocity(-speed, 0)
-      // reverse animation
-      // this.faune.flipX = true;
-
-      this.faune.scaleX = -1; // other way
-      this.faune.body.offset.x = 24
-
-      this.faune.anims.play('faune-run-side', true)
-    } else if (this.cursors.right.isDown) {
-      this.faune.setVelocity(speed, 0)
-      // reverse animation
-      // this.faune.flipX = false;
-
-      this.faune.scaleX = 1;
-      this.faune.body.offset.x = 8
-
-      this.faune.anims.play('faune-run-side', true)
-    } else if (this.cursors.up.isDown) {
-      this.faune.setVelocity(0, -speed)
-      this.faune.anims.play('faune-run-up', true)
-    } else if (this.cursors.down.isDown) {
-      this.faune.setVelocity(0, speed)
-      this.faune.anims.play('faune-run-down', true)
-    } else {
-      this.faune.setVelocity(0, 0)
-      const currentKey = this.faune.anims.currentAnim.key
-      const actionKey = currentKey.split('-').pop()
-
-      this.faune.anims.play(`faune-idle-${actionKey}`, true)
+      return false
     }
+
+    if (this.cursors && this.faune) {
+      this.faune.update(this.cursors)
+    }
+
+
   }
 
-  private createAnims() {
-    // DOWN
-    this.anims.create({
-      key: 'faune-idle-down',
-      frames: [{key: 'faune', frame: 'walk-down-3.png'}],
-    })
+  private playerLizardCollision(faune: Phaser.GameObjects.GameObject, obj2: Phaser.GameObjects.GameObject) {
+    const lizard = obj2 as Lizard
 
-    this.anims.create({
-      key: 'faune-run-down',
-      frames: this.anims.generateFrameNames('faune',
-        {
-          start: 1, end: 8, prefix: 'run-down-', suffix: '.png'
-        }),
-      repeat: -1,
-      frameRate: 15
-    })
+    const dx = this.faune.x - lizard.x
+    const dy = this.faune.y - lizard.y
 
-    // UP
-    this.anims.create({
-      key: 'faune-idle-up',
-      frames: [{key: 'faune', frame: 'walk-up-3.png'}],
-    })
+    const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(200)
 
-    this.anims.create({
-      key: 'faune-run-up',
-      frames: this.anims.generateFrameNames('faune',
-        {
-          start: 1, end: 8, prefix: 'run-up-', suffix: '.png'
-        }),
-      repeat: -1,
-      frameRate: 15
-    })
-    // RIGHT
-    this.anims.create({
-      key: 'faune-idle-side',
-      frames: [{key: 'faune', frame: 'walk-side-3.png'}],
-    })
+    this.faune.setVelocity(dir.x, dir.y)
 
-    this.anims.create({
-      key: 'faune-run-side',
-      frames: this.anims.generateFrameNames('faune',
-        {
-          start: 1, end: 8, prefix: 'run-side-', suffix: '.png'
-        }),
-      repeat: -1,
-      frameRate: 15
-    })
+    this.hit = 1
   }
 
 }
