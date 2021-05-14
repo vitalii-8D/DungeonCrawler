@@ -33,18 +33,20 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
     if (this.healthState === HealthState.DAMAGE) return false
     if (this._health <= 0) return false
 
-    this.setVelocity(dir.x, dir.y)
-
-    this.setTint(0xff0000)
-
-    this.healthState = HealthState.DAMAGE
-    this.damageTime = 0
-
     --this._health
 
     if (this._health <= 0) {
       // die
+      this.anims.play('faune-faint', true)
+      // this.body.checkCollision.none = true
       this.healthState = HealthState.DEAD
+    } else {
+      this.setVelocity(dir.x, dir.y)
+
+      this.setTint(0xff0000)
+
+      this.healthState = HealthState.DAMAGE
+      this.damageTime = 0
     }
   }
 
@@ -55,6 +57,9 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
       case HealthState.IDLE:
         break
       case HealthState.DAMAGE:
+        const animKey = this.anims.currentAnim.key.split('-').pop()
+        this.anims.play(`faune-push-${animKey}`)
+
         this.damageTime+=dt
         if (this.damageTime >= 250) {
           this.healthState = HealthState.IDLE
@@ -63,7 +68,6 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
         }
         break
       case HealthState.DEAD:
-        this.anims.play('faune-idle-down')
         this.setVelocity(0, 0)
         break
 
