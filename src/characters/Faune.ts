@@ -7,6 +7,11 @@ declare global {
   }
 }
 
+// More ways to get global variables in TS
+// 1) const initialData = (window as any).__INITIAL_DATA__;  (is not a guarantee that the Variable will be set correctly at runtime)
+// 2) declare var __INITIAL_DATA__: any;   (window.__INITIAL_DATA__ will not work from within an ECMAScript module)
+// 3) ...the method above :) (a good idea to create a globals.d.ts file in your project)
+
 enum HealthState {
   IDLE,
   DAMAGE,
@@ -35,11 +40,13 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
 
     --this._health
 
-    if (this._health <= 0) {
-      // die
-      this.anims.play('faune-faint', true)
-      // this.body.checkCollision.none = true
+    if (this._health <= 0) {    // Die
+
       this.healthState = HealthState.DEAD
+      this.anims.play('faune-faint', true)
+      this.setVelocity(0,0)
+      // this.body.checkCollision.none = true
+
     } else {
       this.setVelocity(dir.x, dir.y)
 

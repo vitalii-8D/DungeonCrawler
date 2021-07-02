@@ -5,6 +5,7 @@ enum Direction {
   RIGHT
 }
 
+// Calculate new direction
 const randomDirection = (exclude: Direction) => {
   let newDirection = Phaser.Math.Between(0, 3)
 
@@ -71,6 +72,5 @@ export default class Lizard extends Phaser.Physics.Arcade.Sprite {
 
     super.destroy();
   }
-
 
 }
