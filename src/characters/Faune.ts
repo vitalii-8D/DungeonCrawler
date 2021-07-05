@@ -24,6 +24,8 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
 
   private _health = 3
 
+  private knives?: Phaser.Physics.Arcade.Group
+
   get health() {
     return this._health
   }
@@ -32,6 +34,10 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, texture, frame);
 
     this.anims.play('faune-idle-down')
+  }
+
+  setKnives(knives: Phaser.Physics.Arcade.Group) {
+    this.knives = knives
   }
 
   handleDamage(dir: Phaser.Math.Vector2) {
@@ -55,7 +61,49 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
       this.healthState = HealthState.DAMAGE
       this.damageTime = 0
     }
-  }
+  } // *** handleDamage() ***
+
+  private throwKnife() {
+    if (!this.knives) return undefined;
+
+    const direction = this.anims.currentAnim.key.split('-').pop()
+
+    const vec = new Phaser.Math.Vector2(0, 0)
+    switch (direction) {
+      case 'up':
+        vec.y = -1
+        break
+
+      case 'down':
+        vec.y = 1
+        break
+
+      case 'side':
+        if (this.flipX) {  // if (this.scaleX < 0) - if using this way to turn animation
+          vec.x = -1
+        } else {
+          vec.x = 1
+        }
+        break
+
+      default:
+        break
+    }
+
+    const angle = vec.angle()
+    const knife = this.knives.get(this.x, this.y, 'knife') as Phaser.Physics.Arcade.Image
+
+    knife.setActive(true)
+    knife.setVisible(true)
+
+    knife.setRotation(angle)  // TODO rotate the hitbox also
+
+    knife.x += vec.x * 16;
+    knife.y += vec.y * 16;
+
+    knife.setVelocity(vec.x * 200, vec.y * 200);
+
+  } // *** throwKnife() ***
 
   protected preUpdate(t: number, dt: number) {
     super.preUpdate(t, dt);
@@ -79,19 +127,18 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
         break
 
     }
-  }
+  } // *** preUpdate() ***
 
   update(cursor: Phaser.Types.Input.Keyboard.CursorKeys) {
     super.update()
-    if (!cursor) return false
-    if (this.healthState === HealthState.DEAD) return false
-    if (this.healthState === HealthState.DAMAGE) {
-      // const currentKey = this.anims.currentAnim.key
-      // const actionKey = currentKey.split('-').pop()
-      //
-      // this.anims.play(`faune-idle-${actionKey}`, true)
 
-      return false
+    if (this.healthState === HealthState.DEAD || this.healthState === HealthState.DAMAGE) return false
+
+    if (!cursor) return false
+
+    if (Phaser.Input.Keyboard.JustDown(cursor.space)) {
+      this.throwKnife()
+      return
     }
 
     const speed = 150;
@@ -101,6 +148,7 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
       // reverse animation
       this.flipX = true;
 
+      // This is from video, but it seems to be a bad approach
       // this.scaleX = -1;
       // this.body.offset.x = 24
 
@@ -127,7 +175,7 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
 
       this.anims.play(`faune-idle-${actionKey}`, true)
     }
-  }
+  } // *** update() ***
 }
 
 Phaser.GameObjects.GameObjectFactory.register('faune', function (this: Phaser.GameObjects.GameObjectFactory, x: number, y: number, texture: string, frame?: string | number) {

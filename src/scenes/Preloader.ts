@@ -11,10 +11,12 @@ export default class Preloader extends Phaser.Scene {
 
     this.load.atlas('faune', 'src/assets/faune.png', 'src/assets/faune.json')
     this.load.spritesheet('green_lizard', 'src/assets/green_lizard.png', {frameWidth: 16, frameHeight: 28})
+    this.load.atlas('treasure', 'src/assets/items/treasure.png', 'src/assets/items/treasure.json')
 
     this.load.image('ui-heart-full', 'src/assets/ui/ui_heart_full.png')
     this.load.image('ui-heart-empty', 'src/assets/ui/ui_heart_empty.png')
 
+    this.load.image('knife', 'src/assets/weapons/weapon_knife.png')
   }
 
   create() {
