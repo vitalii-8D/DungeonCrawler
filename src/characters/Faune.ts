@@ -103,8 +103,15 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
     const angle = vec.angle()
     const knife = this.knives.get(this.x, this.y, 'knife') as Phaser.Physics.Arcade.Image
 
+    if (!knife) return undefined
+
     knife.setActive(true)
     knife.setVisible(true)
+
+    // knife.enableBody(true, knife.x, knife.y, true, true)
+
+    const body = knife.body as Phaser.Physics.Arcade.Body
+    body.enable = true
 
     knife.setRotation(angle)  // TODO rotate the hitbox also
 

@@ -8,10 +8,11 @@ export default class GameUI extends Phaser.Scene {
   }
 
   create() {
-    const coinsLabel = this.add.text(5, 20, '0')
+    this.add.image(15, 45, 'treasure', 'coin_anim_f0.png').setScale(2)
+    const coinsLabel = this.add.text(25, 39, '0')
 
     sceneEvents.on('player-coins-changed', (coins: number) => {
-      coinsLabel.text = coins.toString()
+      coinsLabel.text = coins.toLocaleString() // Adding a comma in numbers > 1000
     })
 
     this.hearts = this.add.group({
