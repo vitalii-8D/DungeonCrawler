@@ -1,3 +1,6 @@
+import Chest from "~/items/Chest";
+
+import {sceneEvents} from "~/events/EventsCenter";
 
 declare global {
   namespace Phaser.GameObjects {
@@ -23,8 +26,11 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
   private damageTime = 0
 
   private _health = 3
+  private _coins = 0
 
   private knives?: Phaser.Physics.Arcade.Group
+
+  private activeChest?: Chest
 
   get health() {
     return this._health
@@ -38,6 +44,10 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
 
   setKnives(knives: Phaser.Physics.Arcade.Group) {
     this.knives = knives
+  }
+
+  setChest(chest) {
+    this.activeChest = chest
   }
 
   handleDamage(dir: Phaser.Math.Vector2) {
@@ -137,7 +147,17 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
     if (!cursor) return false
 
     if (Phaser.Input.Keyboard.JustDown(cursor.space)) {
-      this.throwKnife()
+      if (this.activeChest) {
+        const coins = this.activeChest.open()
+        this._coins += coins
+
+        sceneEvents.emit('player-coins-changed', this._coins)
+
+        console.log(this._coins);
+      } else {
+        this.throwKnife()
+      }
+
       return
     }
 
@@ -175,6 +195,11 @@ export default class Faune extends Phaser.Physics.Arcade.Sprite {
 
       this.anims.play(`faune-idle-${actionKey}`, true)
     }
+
+    if (cursor.left.isDown || cursor.right.isDown || cursor.up.isDown || cursor.down.isDown) {
+      this.activeChest = undefined
+    }
+
   } // *** update() ***
 }
 

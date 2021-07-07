@@ -8,6 +8,7 @@ import {createChestAnims} from "~/animation/TreasureAnims";
 import '../characters/Faune'
 import Faune from "~/characters/Faune";
 import {sceneEvents} from "~/events/EventsCenter";
+import Chest from "~/items/Chest";
 
 export default class Game extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
@@ -54,15 +55,14 @@ export default class Game extends Phaser.Scene {
 
     wallsLayer.setCollisionByProperty({collides: true})
 
-    const chests = this.physics.add.staticGroup()
-    // const chestLayer = map.createFromObjects('chests', {key: 'chest_full_open_anim_f0'})
-    const chestLayer = map.createLayer('chests', tileset)
-    console.log(chestLayer);
-    const aaa = chestLayer.getData('chests')
-    console.log(aaa);
-    // chestLayer.data.forEach(chest => {
-    //   chests.get(chest.x, chest.y, 'treasure', 'chest_empty_open_anim_f0.png')
-    // })
+    const chests = this.physics.add.staticGroup({
+      classType: Chest
+    })
+    const chestLayer = map.getObjectLayer('chests')
+
+    chestLayer.objects.forEach(chest => {
+      chests.get(chest.x! - chest.width! * 0.5, chest.y! - chest.height! * 0.5, 'treasure', 'chest_empty_open_anim_f0.png')
+    })
 
     // debugDraw(this, wallsLayer)
 
@@ -87,11 +87,17 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(this.faune, wallsLayer)
     this.physics.add.collider(wallsLayer, this.lizards)
 
+    this.physics.add.collider(this.faune, chests, this.handlePlayerChestCollision, undefined, this)
+
     this.physics.add.collider(this.knives, this.lizards, this.handleKnivesLizardCollision, undefined, this)
     this.physics.add.collider(this.knives, wallsLayer, this.handleKnivesWallCollision, undefined, this)
 
     this.playerLizardsCollider = this.physics.add.collider(this.faune, this.lizards, this.handlePlayerLizardCollision, undefined, this)
 
+  }
+
+  private handlePlayerChestCollision(faune: Phaser.GameObjects.GameObject, chest: Phaser.GameObjects.GameObject | Chest) {
+    this.faune.setChest(chest)
   }
 
   update(t, dt) {

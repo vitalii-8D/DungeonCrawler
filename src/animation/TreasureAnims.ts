@@ -12,7 +12,7 @@ const createChestAnims = (anims: Phaser.Animations.AnimationManager) => {
 
   anims.create({
     key: 'chest-closed',
-    frames: [{key: 'treasure', frame: 'chest_full_open_anim_f0'}]
+    frames: [{key: 'treasure', frame: 'chest_empty_open_anim_f0.png'}]
 
   })
 }
